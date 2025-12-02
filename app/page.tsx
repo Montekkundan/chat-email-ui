@@ -1,42 +1,49 @@
-'use client';
+"use client";
+import { useChat } from "@ai-sdk/react";
+import { CopyIcon, RefreshCcwIcon } from "lucide-react";
+import { Fragment, type SetStateAction, useState } from "react";
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from '@/components/ai-elements/conversation';
-import { Message, MessageAction, MessageActions, MessageContent, MessageResponse } from '@/components/ai-elements/message';
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageAction,
+  MessageActions,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
 import {
   PromptInput,
   PromptInputActionMenu,
   PromptInputBody,
+  PromptInputFooter,
   type PromptInputMessage,
   PromptInputSubmit,
   PromptInputTextarea,
-  PromptInputFooter,
   PromptInputTools,
-} from '@/components/ai-elements/prompt-input';
-import { CopyIcon, RefreshCcwIcon } from 'lucide-react';
-import { useChat } from '@ai-sdk/react';
-import { Fragment, SetStateAction, useState } from 'react';
-import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
-import { Settings } from '@/components/settings';
+} from "@/components/ai-elements/prompt-input";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { Settings } from "@/components/settings";
 
 const suggestions = [
-  "Tell me a joke about technology.",
-  "What's the weather like today?",
-  "Give me a fun fact about space."
+  "Draft an email to a professor about joining their research lab",
+  "Write a cold email for a software engineering internship",
+  "Create an outreach email for a collaborative project",
 ];
 
+import { EmailCard } from "@/components/email-card";
+
 export default function Chat() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const { messages, sendMessage, regenerate, stop, status } = useChat();
 
   const handleSubmit = (message: PromptInputMessage) => {
-
     // @ts-expect-error I dont know why this is happening
     const hasText = Boolean(message.text);
 
-    if (!(hasText)) {
+    if (!hasText) {
       return;
     }
 
@@ -48,10 +55,10 @@ export default function Chat() {
       {
         body: {
           apiKey: localStorage.getItem("AI_GATEWAY_API_KEY") || undefined,
-        }
+        },
       }
     );
-    setInput('');
+    setInput("");
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -63,23 +70,23 @@ export default function Chat() {
         },
       }
     );
-    setInput('');
+    setInput("");
   };
 
   return (
     <>
-      <div className="fixed right-4 top-4 z-50">
+      <div className="fixed top-4 right-4 z-50">
         <Settings />
       </div>
-      <div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
-        <div className="flex flex-col h-full">
+      <div className="relative mx-auto size-full h-screen max-w-4xl p-6">
+        <div className="flex h-full flex-col">
           <Conversation>
             <ConversationContent>
               {messages.map((message, messageIndex) => (
                 <Fragment key={message.id}>
                   {message.parts.map((part, i) => {
                     switch (part.type) {
-                      case 'text':
+                      case "text": {
                         const isLastMessage =
                           messageIndex === messages.length - 1;
                         return (
@@ -89,19 +96,19 @@ export default function Chat() {
                                 <MessageResponse>{part.text}</MessageResponse>
                               </MessageContent>
                             </Message>
-                            {message.role === 'assistant' && isLastMessage && (
+                            {message.role === "assistant" && isLastMessage && (
                               <MessageActions>
                                 <MessageAction
-                                  onClick={() => regenerate()}
                                   label="Retry"
+                                  onClick={() => regenerate()}
                                 >
                                   <RefreshCcwIcon className="size-3" />
                                 </MessageAction>
                                 <MessageAction
+                                  label="Copy"
                                   onClick={() =>
                                     navigator.clipboard.writeText(part.text)
                                   }
-                                  label="Copy"
                                 >
                                   <CopyIcon className="size-3" />
                                 </MessageAction>
@@ -109,6 +116,21 @@ export default function Chat() {
                             )}
                           </Fragment>
                         );
+                      }
+                      case "tool-generateDraftEmail":
+                        if (part.state === "output-available") {
+                          const { to, subject, body } = part.output as any;
+                          return (
+                            <div className="w-full" key={part.toolCallId}>
+                              <EmailCard
+                                body={body || ""}
+                                subject={subject || ""}
+                                to={to || ""}
+                              />
+                            </div>
+                          );
+                        }
+                        return null;
                       default:
                         return null;
                     }
@@ -119,11 +141,11 @@ export default function Chat() {
             <ConversationScrollButton />
           </Conversation>
 
-          <div className="grid gap-4 mt-4">
+          <div className="mt-4 grid gap-4">
             <Suggestions>
               {suggestions.map((suggestion) => (
                 <Suggestion
-                  disabled={status === 'streaming' || status === 'submitted'}
+                  disabled={status === "streaming" || status === "submitted"}
                   key={suggestion}
                   onClick={handleSuggestionClick}
                   suggestion={suggestion}
@@ -131,31 +153,35 @@ export default function Chat() {
               ))}
             </Suggestions>
 
-            <PromptInput onSubmit={handleSubmit} globalDrop multiple>
+            <PromptInput globalDrop multiple onSubmit={handleSubmit}>
               <PromptInputBody>
                 <PromptInputTextarea
-                  onChange={(e: { target: { value: SetStateAction<string>; }; }) => setInput(e.target.value)}
-                  value={input}
+                  disabled={status === "streaming" || status === "submitted"}
+                  onChange={(e: {
+                    target: { value: SetStateAction<string> };
+                  }) => setInput(e.target.value)}
                   placeholder="Lets have fun with tool calling..."
-                  disabled={status === 'streaming' || status === 'submitted'}
+                  value={input}
                 />
               </PromptInputBody>
               <PromptInputFooter>
                 <PromptInputTools>
-                  <PromptInputActionMenu>
-                  </PromptInputActionMenu>
+                  <PromptInputActionMenu />
                 </PromptInputTools>
-                <PromptInputSubmit stop={stop} disabled={!input && !status} status={status} />
+                <PromptInputSubmit
+                  disabled={!(input || status)}
+                  status={status}
+                  stop={stop}
+                />
               </PromptInputFooter>
-
             </PromptInput>
-            <p className="text-xs mx-auto font-light">
+            <p className="mx-auto font-light text-xs">
               Thank you{" "}
               <a
+                className="text-black transition-colors hover:text-green-700"
                 href="https://vercel.com"
-                target="_blank"
                 rel="noopener noreferrer nofollow"
-                className="text-black hover:text-green-700 transition-colors"
+                target="_blank"
               >
                 Vercel ▲
               </a>
