@@ -21,11 +21,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type EmailCardProps {
+type EmailCardProps = {
   to: string;
   subject: string;
   body: string;
-}
+};
 
 export function EmailCard({
   to: initialTo,
@@ -65,19 +65,24 @@ export function EmailCard({
 
   const renderBody = (text: string) => {
     // Split by placeholders like [text]
-    const parts = text.split(/(\[.*?\])/g);
-    return parts.map((part, index) => {
+    const parts = text.split(/(\\[.*?\\])/g);
+    let charPosition = 0;
+
+    return parts.map((part) => {
+      const key = `${part.substring(0, 20)}-${charPosition}`;
+      charPosition += part.length;
+
       if (part.startsWith("[") && part.endsWith("]")) {
         return (
           <span
             className="mx-0.5 rounded bg-primary/10 px-1 font-medium text-primary"
-            key={index}
+            key={key}
           >
             {part}
           </span>
         );
       }
-      return <span key={index}>{part}</span>;
+      return <span key={key}>{part}</span>;
     });
   };
 
