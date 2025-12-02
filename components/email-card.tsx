@@ -65,7 +65,7 @@ export function EmailCard({
 
   const renderBody = (text: string) => {
     // Split by placeholders like [text]
-    const parts = text.split(/(\\[.*?\\])/g);
+    const parts = text.split(/(\[.*?\])/g);
     let charPosition = 0;
 
     return parts.map((part) => {
@@ -75,7 +75,7 @@ export function EmailCard({
       if (part.startsWith("[") && part.endsWith("]")) {
         return (
           <span
-            className="mx-0.5 rounded bg-primary/10 px-1 font-medium text-primary"
+            className="rounded bg-primary/10 px-1.5 py-0.5 font-medium text-primary"
             key={key}
           >
             {part}

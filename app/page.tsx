@@ -25,6 +25,8 @@ import {
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { EmailCard } from "@/components/email-card";
+import { EmailCardSkeleton } from "@/components/email-card-skeleton";
 import { Settings } from "@/components/settings";
 
 const suggestions = [
@@ -32,8 +34,6 @@ const suggestions = [
   "Write a cold email for a software engineering internship",
   "Create an outreach email for a collaborative project",
 ];
-
-import { EmailCard } from "@/components/email-card";
 
 export default function Chat() {
   const [input, setInput] = useState("");
@@ -130,7 +130,12 @@ export default function Chat() {
                             </div>
                           );
                         }
-                        return null;
+                        // Show skeleton while tool is being executed
+                        return (
+                          <div className="w-full" key={part.toolCallId}>
+                            <EmailCardSkeleton />
+                          </div>
+                        );
                       default:
                         return null;
                     }
