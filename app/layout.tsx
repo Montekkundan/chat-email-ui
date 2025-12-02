@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chat template",
-  description: "Chat template for testing the AI SDK capabilities.",
+  title: "Chat Email UI Demo",
+  description:
+    "A minimal demo showing how to render visual interfaces in chat using the AI SDK v6 tool calling pattern.",
 };
 
 export default function RootLayout({
